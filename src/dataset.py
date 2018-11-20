@@ -70,7 +70,7 @@ def calc_grad(data):
 
 def preprocess(noisy_img, reference):
 
-  return noisy_img, reference[:, :, :3]
+  #return noisy_img, reference[:, :, :3]
 
   # =======================================
   color          = noisy_img[:, :, :3]

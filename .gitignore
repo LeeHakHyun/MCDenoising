@@ -2,3 +2,5 @@ debug/
 data/
 *.vsdx
 *.~vsdx
+__pycache__/
+*.pyc

@@ -3,98 +3,56 @@ import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 
 class BaseModel(metaclass=ABCMeta):
-  def __init__(self, input_shape,
-                     output_shape,
-                     loss_func,
-                     start_lr,
-                     lr_decay_step,
-                     lr_decay_rate):
-
-    self.inputs    = tf.placeholder(tf.float32, 
-                                    shape = [None] + list(input_shape), 
-                                    name='inputs')
-    self.refers    = tf.placeholder(tf.float32, 
-                                    shape = [None] + list(output_shape), 
-                                    name='reference')
-
-    self.lr        = tf.train.exponential_decay(start_lr,
-                                                tf.train.get_or_create_global_step(),
-                                                lr_decay_step,
-                                                lr_decay_rate, 
-                                                staircase=True)
-
-    self.global_step = tf.train.get_or_create_global_step()
-
-    self.outputs  = self.build_model()
-    self.loss     = self.build_loss(loss_func)
-    self.train_op = self.build_train_op()
-
-    L2            = self.build_loss("L2")
-    HUBER         = self.build_loss("HUBER")
-    LMLS          = self.build_loss("LMLS")
-    RELMSE        = self.build_loss("RELMSE")
-    L1            = self.build_loss("L1")
-    MAPE          = self.build_loss("MAPE")
-    SSIM          = self.build_loss("SSIM")
-
-    tf.summary.scalar("L2", L2)
-    tf.summary.scalar("HUBER", HUBER)
-    tf.summary.scalar("LMLS", LMLS)
-    tf.summary.scalar("RELMSE", RELMSE)
-    tf.summary.scalar("L1", L1)
-    tf.summary.scalar("MAPE", MAPE)
-    tf.summary.scalar("SSIM", SSIM)
-    tf.summary.scalar("Learning_rate", self.lr)
-
   @abstractmethod  
   def build_model(self):
     pass
   
-  def build_loss(self, loss_func):
+  def build_loss(self, loss_func, outputs, refers):
     
     if loss_func == "L2":
-      diff_square = tf.square(tf.subtract(self.outputs, self.refers))
+      diff_square = tf.square(tf.subtract(outputs, refers))
       loss = tf.reduce_mean(diff_square)
       
     elif loss_func == 'HUBER':
-      huber_loss = tf.losses.huber_loss(self.refers, self.outputs)
+      huber_loss = tf.losses.huber_loss(refers, outputs)
       loss = tf.reduce_mean(huber_loss)
 
     elif loss_func == "LMLS":
-      diff = tf.subtract(self.outputs, self.refers)
+      diff = tf.subtract(outputs, refers)
       diff_square_ch_mean = tf.reduce_mean(tf.square(diff), axis=-1)
       loss = tf.reduce_mean(tf.log(1 + (0.5 * diff_square_ch_mean)))
     
     elif loss_func == "RELMSE":
-      L2 = tf.square(tf.subtract(self.outputs, self.refers))
-      denom = tf.square(self.refers) + 1.0e-2
+      L2 = tf.square(tf.subtract(outputs, refers))
+      denom = tf.square(refers) + 1.0e-2
       loss = tf.reduce_mean(L2 / denom)
 
     elif loss_func == "L1":
-      diff = tf.abs(tf.subtract(self.outputs, self.refers))
+      diff = tf.abs(tf.subtract(outputs, refers))
       loss = tf.reduce_mean(diff)
 
     elif loss_func == 'MAPE':
-      diff = tf.abs(tf.subtract(self.outputs, self.refers))
-      diff = tf.div(diff, self.refers + 1.0+1e-2)
+      diff = tf.abs(tf.subtract(outputs, refers))
+      diff = tf.div(diff, refers + 1.0+1e-2)
       loss = tf.reduce_mean(diff)
 
     elif loss_func == 'SSIM':
-      loss = SSIM(self.outputs, self.refers)
+      loss = SSIM(outputs, refers)
 
     return loss
     
 
-  def build_train_op(self):
-    optim = tf.train.AdamOptimizer(self.lr)
-    
-    grads = optim.compute_gradients(self.loss)
+  def build_train_op(self, lr, loss):
+    optim = tf.train.AdamOptimizer(lr)
+
+    grads = optim.compute_gradients(loss)
 
     # Clip gradients to avoid exploding weights
     grads = [(None, var) if grad is None else (tf.clip_by_value(grad, -1.0, 1.0), var) for grad, var in grads]
 
     # Apply gradients
-    apply_gradient_op = optim.apply_gradients(grads, global_step=self.global_step)
+    apply_gradient_op = optim.apply_gradients(grads, 
+                                              global_step=tf.train.get_or_create_global_step())
     with tf.control_dependencies([apply_gradient_op]):
       train_op = tf.no_op(name='Train')
 

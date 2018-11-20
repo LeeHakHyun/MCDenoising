@@ -10,14 +10,43 @@ class DenoisingNet(BaseModel):
                      lr_decay_step,
                      lr_decay_rate):
   
-    self.in_ch = input_shape[-1]
+    self.input_shape  = input_shape
+    self.output_shape = output_shape
+    
+    self.inputs       = tf.placeholder(tf.float32, [None] + input_shape)
+    self.refers       = tf.placeholder(tf.float32, [None] + output_shape)
+    
+    self.lr           = tf.train.exponential_decay(
+                            start_lr,
+                            tf.train.get_or_create_global_step(),
+                            lr_decay_step,
+                            lr_decay_rate, 
+                            staircase=True)
 
-    super().__init__(input_shape,
-                     output_shape,
-                     loss_func,
-                     start_lr,
-                     lr_decay_step,
-                     lr_decay_rate)
+    self.outputs      = self.build_model()
+    # Loss에 gradient를 추가
+    self.loss         = self.build_loss(loss_func, self.outputs, self.refers)
+    self.train_op     = self.build_train_op(self.lr, self.loss)
+
+    self.global_step  = tf.train.get_or_create_global_step()
+
+    L2_loss = self.build_loss('L2', self.outputs, self.refers)
+    HUBER_loss = self.build_loss('HUBER', self.outputs, self.refers)
+    LMLS_loss = self.build_loss('LMLS', self.outputs, self.refers)
+    RELMSE_loss = self.build_loss('RELMSE', self.outputs, self.refers)
+    L1_loss = self.build_loss('L1', self.outputs, self.refers)
+    MAPE_loss = self.build_loss('MAPE', self.outputs, self.refers)
+    SSIM_loss = self.build_loss('SSIM', self.outputs, self.refers)
+    
+    tf.summary.scalar('Loss', self.loss)
+    tf.summary.scalar('Learning rate', self.lr)
+    tf.summary.scalar('L2', L2_loss)
+    tf.summary.scalar('HUBER', HUBER_loss)
+    tf.summary.scalar('LMLS', LMLS_loss)
+    tf.summary.scalar('RELMSE', RELMSE_loss)
+    tf.summary.scalar('L1', L1_loss)
+    tf.summary.scalar('MAPE', MAPE_loss)
+    tf.summary.scalar('SSIM', SSIM_loss)
 
   def conv2d_module(self, inputs, feature, kernel, stride, activation):
     layer = conv2d(inputs, feature, kernel, stride, activation=activation)

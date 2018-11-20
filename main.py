@@ -12,7 +12,7 @@ from src.dataset import next_batch_tensor
 # 1. 모델 하나로 Color direct 출력. 전처리 없이
 # 2. 모델 두개로 Diffuse, specular 두개로 분리해서 여러가지 전처리해서 처리
 
-EXPERIMENT_NAME   = 'Model2'
+EXPERIMENT_NAME   = 'Model3'
 
 BATCH_SIZE        = 32
 IMG_HEIGHT        = 720
@@ -20,7 +20,7 @@ IMG_WIDTH         = 1280
 PATCH_SIZE        = 64
 N_NOISY_FEATURE   = 22
 N_REFER_FEATURE   = 9
-INPUT_CH          = 22
+INPUT_CH          = 54
 OUTPUT_CH         = 3
 
 TRAIN_TFRECORD    = './data/train.tfrecord'
@@ -99,7 +99,6 @@ def main(_):
         shape = [PATCH_SIZE, PATCH_SIZE, N_NOISY_FEATURE, N_REFER_FEATURE],
         batch_size = BATCH_SIZE,
         shuffle_buffer = BATCH_SIZE * 2,
-        #prefetch_size = 1
       )
 
     while True:
@@ -108,7 +107,7 @@ def main(_):
         noisy_img, reference = sess.run([train_noisy_img, train_reference])
       except tf.errors.OutOfRangeError as e:
         print("Done")
-        break
+        break      
 
       _, step, lr = sess.run([net.train_op, net.global_step, net.lr],
                              feed_dict={net.inputs: noisy_img,
@@ -140,11 +139,13 @@ def main(_):
         rp = REFER_IMAGE_DIR + f'{step+1}'
         dp = DENOISED_IMG_DIR + f'{step+1}'
         np = NOISY_IMAGE_DIR + f'{step+1}'
+
         write_exr(reference[0, :, :, :3], rp + ".exr")
-        to_jpg(rp + ".exr", rp + ".jpg")
         write_exr(denoised_img[0,:,:,:3], dp + ".exr")
-        to_jpg(dp + ".exr", dp + ".jpg")
         write_exr(noisy_img[0,:,:,:3], np + ".exr")
+
+        to_jpg(rp + ".exr", rp + ".jpg")
+        to_jpg(dp + ".exr", dp + ".jpg")
         to_jpg(np + ".exr", np + ".jpg")
 
         os.remove(rp + ".exr")
