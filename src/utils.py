@@ -1,5 +1,6 @@
 import os
 import shutil
+import tensorflow as tf
 
 def make_dir(dir_name):
   if not os.path.isdir(dir_name):

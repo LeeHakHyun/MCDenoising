@@ -12,7 +12,7 @@ from src.dataset import next_batch_tensor
 # 1. 모델 하나로 Color direct 출력. 전처리 없이
 # 2. 모델 두개로 Diffuse, specular 두개로 분리해서 여러가지 전처리해서 처리
 
-EXPERIMENT_NAME   = 'Model3'
+EXPERIMENT_NAME   = 'Model4'
 
 BATCH_SIZE        = 32
 IMG_HEIGHT        = 720

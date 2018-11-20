@@ -24,19 +24,32 @@ class DenoisingNet(BaseModel):
                             staircase=True)
 
     self.outputs      = self.build_model()
-    # Loss에 gradient를 추가
-    self.loss         = self.build_loss(loss_func, self.outputs, self.refers)
+
+    L2_loss           = self.build_loss('L2', self.outputs, self.refers)
+    HUBER_loss        = self.build_loss('HUBER', self.outputs, self.refers)
+    LMLS_loss         = self.build_loss('LMLS', self.outputs, self.refers)
+    RELMSE_loss       = self.build_loss('RELMSE', self.outputs, self.refers)
+    L1_loss           = self.build_loss('L1', self.outputs, self.refers)
+    MAPE_loss         = self.build_loss('MAPE', self.outputs, self.refers)
+    SSIM_loss         = self.build_loss('SSIM', self.outputs, self.refers)
+    
+    # 가로 gradient
+    output_grad       = tf.image.image_gradients(self.outputs)
+    refers_grad       = tf.image.image_gradients(self.refers)
+    loss_grad_dx      = self.build_loss("L1", output_grad, refers_grad)  
+
+    # 세로 gradient
+    output_transposed = tf.image.transpose_image(self.outputs)
+    refers_transposed = tf.image.transpose_image(self.refers)
+    output_grad       = tf.image.image_gradients(output_transposed)
+    refers_grad       = tf.image.image_gradients(refers_transposed)
+    loss_grad_dy      = self.build_loss("L1", output_grad, refers_grad)  
+    
+    self.loss         = L1_loss * 0.8 + loss_grad_dx * 0.1 + loss_grad_dy * 0.1
+
     self.train_op     = self.build_train_op(self.lr, self.loss)
 
     self.global_step  = tf.train.get_or_create_global_step()
-
-    L2_loss = self.build_loss('L2', self.outputs, self.refers)
-    HUBER_loss = self.build_loss('HUBER', self.outputs, self.refers)
-    LMLS_loss = self.build_loss('LMLS', self.outputs, self.refers)
-    RELMSE_loss = self.build_loss('RELMSE', self.outputs, self.refers)
-    L1_loss = self.build_loss('L1', self.outputs, self.refers)
-    MAPE_loss = self.build_loss('MAPE', self.outputs, self.refers)
-    SSIM_loss = self.build_loss('SSIM', self.outputs, self.refers)
     
     tf.summary.scalar('Loss', self.loss)
     tf.summary.scalar('Learning rate', self.lr)
