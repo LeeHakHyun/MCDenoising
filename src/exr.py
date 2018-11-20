@@ -3,7 +3,6 @@ import cv2
 import Imath
 import OpenEXR
 import numpy as np
-from scipy.misc import imsave
 from PIL import Image
 from glob import glob
 
@@ -71,13 +70,6 @@ def read_exr(file_name):
     exr_data[:, :, index] = data
 
   return exr_data.astype(np.float32)
-
-def write_jpg(data, path):
-  data = np.where(data <= 0.0031308,
-                  (data * 12.92) * 255.0,
-                  (1.055*(data ** (1.0/2.4)) - 0.055) * 255.0)
-
-  imsave(path, data[:, :, ::-1])
 
 
 def write_exr(data, path):
