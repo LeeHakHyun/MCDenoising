@@ -4,3 +4,5 @@ data/
 *.~vsdx
 __pycache__/
 *.pyc
+playground/
+src/__pycache__/*
