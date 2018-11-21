@@ -85,7 +85,6 @@ def preprocess(noisy_img, reference):
   albedo_v       = noisy_img[:, :, 19:20]
   depth          = noisy_img[:, :, 20:21]
   depth_v        = noisy_img[:, :, 21:22]  
-
   
   # color_v        = color_v / tf.square(tf.reduce_mean(color, axis=-1, keepdims=True))
   # specular_v     = specular_v / tf.square(tf.reduce_mean(specular, axis=-1, keepdims=True))
@@ -99,16 +98,64 @@ def preprocess(noisy_img, reference):
   # depth /= max_depth
   # depth_v /= max_depth * max_depth
 
+  color_grad = calc_grad(color)
+  specular_grad = calc_grad(specular)
+  diffuse_grad = calc_grad(diffuse)
+  normal_grad = calc_grad(normal)
+  albedo_grad = calc_grad(albedo)
+  depth_grad = calc_grad(depth)
+
+  def median(image):
+    image   = tf.expand_dims(image, axis=0)
+    patches = tf.extract_image_patches(image, [1, 3, 3, 1], [1] * 4, [1]*4, 'SAME')
+    medians = tf.contrib.distributions.percentile(patches, 50.0, axis=3)
+    return tf.transpose(medians, [1, 2, 0])
+
+  med = list()
+  for index in [0, 1, 2, 4, 5, 6, 8, 9, 10]:
+    med.append(median(noisy_img[:, :, index:index+1]))
+  
+
   # color = tf.log(color + 1.0)
   # specular = tf.log(specular + 1.0)
   # diffuse = diffuse / (albedo + 0.00316)
 
-  noisy_img = tf.concat((color, color_v, calc_grad(color),
-                         specular, specular_v, calc_grad(specular),
-                         diffuse, diffuse_v, calc_grad(diffuse),
-                         normal, normal_v, calc_grad(normal),
-                         albedo, albedo_v, calc_grad(albedo),
-                         depth, depth_v, calc_grad(depth)), axis=-1)
+  # median 데이터 추가(할려했으나 어떻게 해야할 지 모르겠음)
+  #test1 = tf.transpose(color, [2, 0, 1]); print(test1)
+  # test2 = tf.expand_dims(color, axis=0); print(test2)
+  # test3 = tf.layers.average_pooling2d(test2, [3,3], [1,1], padding="same"); print(test3)
+  # test4 = tf.squeeze(test3, axis=0); print(test4)
+  
+
+  #color_av3 = tf.layers.average_pooling2d(tf.transpose(tf.expand_dims(color, axis=0), [2, 0, 1]), [3,3], [1,1], padding="same")
+  # color_av5 = tf.nn.avg_pool(tf.expand_dims(color, axis=0), 5, 1, padding="same")
+  # color_av7 = tf.nn.avg_pool(tf.expand_dims(color, axis=0), 7, 1, padding="same")
+
+  # specular_av3 = tf.nn.avg_pool(tf.expand_dims(specular, axis=0), 3, 1, padding="same")
+  # specular_av5 = tf.nn.avg_pool(tf.expand_dims(specular, axis=0), 5, 1, padding="same")
+  # specular_av7 = tf.nn.avg_pool(tf.expand_dims(specular, axis=0), 7, 1, padding="same")
+
+  # diffuse_av3 = tf.nn.avg_pool(tf.expand_dims(diffuse, axis=0), 3, 1, padding="same")
+  # diffuse_av5 = tf.nn.avg_pool(tf.expand_dims(diffuse, axis=0), 5, 1, padding="same")
+  # diffuse_av7 = tf.nn.avg_pool(tf.expand_dims(diffuse, axis=0), 7, 1, padding="same")
+
+  # color_av5 = tf.squeeze(color_av5)
+  # color_av7 = tf.squeeze(color_av7)
+  # specular_av3 = tf.squeeze(specular_av3)
+  # specular_av5 = tf.squeeze(specular_av5)
+  # specular_av7 = tf.squeeze(specular_av7)
+  # diffuse_av3 = tf.squeeze(diffuse_av3)
+  # diffuse_av5 = tf.squeeze(diffuse_av5)
+  # diffuse_av7 = tf.squeeze(diffuse_av7) 
+
+
+  noisy_img = tf.concat(med +
+                        [color, color_v, color_grad, 
+                         specular, specular_v, specular_grad, 
+                         diffuse, diffuse_v, diffuse_grad, 
+                         normal, normal_v, normal_grad,
+                         albedo, albedo_v, albedo_grad,
+                         depth, depth_v, depth_grad], axis=-1)
 
   return noisy_img, reference[:, :, :3]
 

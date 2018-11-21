@@ -33,19 +33,8 @@ class DenoisingNet(BaseModel):
     MAPE_loss         = self.build_loss('MAPE', self.outputs, self.refers)
     SSIM_loss         = self.build_loss('SSIM', self.outputs, self.refers)
     
-    # 가로 gradient
-    output_grad       = tf.image.image_gradients(self.outputs)
-    refers_grad       = tf.image.image_gradients(self.refers)
-    loss_grad_dx      = self.build_loss("L1", output_grad, refers_grad)  
 
-    # 세로 gradient
-    output_transposed = tf.image.transpose_image(self.outputs)
-    refers_transposed = tf.image.transpose_image(self.refers)
-    output_grad       = tf.image.image_gradients(output_transposed)
-    refers_grad       = tf.image.image_gradients(refers_transposed)
-    loss_grad_dy      = self.build_loss("L1", output_grad, refers_grad)  
-    
-    self.loss         = L1_loss * 0.8 + loss_grad_dx * 0.1 + loss_grad_dy * 0.1
+    self.loss         = self.build_loss(loss_func, self.outputs, self.refers)
 
     self.train_op     = self.build_train_op(self.lr, self.loss)
 
