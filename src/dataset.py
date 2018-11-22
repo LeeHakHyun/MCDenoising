@@ -87,8 +87,8 @@ def preprocess(noisy_img, reference):
   depth_v        = noisy_img[:, :, 21:22]  
   
   max_depth = tf.reduce_max(depth)
-  depth = tf.clip_by_value(depth, 0, max_depth)
-  depth /= max_depth
+  clipped_depth = tf.clip_by_value(depth, 0, max_depth)
+  clipped_depth /= max_depth
 
   color_v        = color_v / (tf.square(tf.reduce_mean(color, axis=-1, keepdims=True)) + 0.001)
   specular_v     = specular_v / (tf.square(tf.reduce_mean(specular, axis=-1, keepdims=True)) + 0.001)
@@ -125,7 +125,7 @@ def preprocess(noisy_img, reference):
                          diffuse, diffuse_v, diffuse_grad, 
                          normal, normal_v, normal_grad,
                          albedo, albedo_v, albedo_grad,
-                         depth, depth_v, depth_grad], axis=-1)
+                         depth, clipped_depth, depth_v, depth_grad], axis=-1)
 
   return noisy_img, reference[:, :, :3]
 
@@ -151,29 +151,29 @@ def preprocess(noisy_img, reference):
   # print(albedo_v)
   # print(depth)
   # print(depth_v)
-  normed_color = tf.image.per_image_standardization(color)
-  normed_specular = tf.image.per_image_standardization(specular)
-  normed_diffuse = tf.image.per_image_standardization(diffuse)
-  normed_normal = tf.image.per_image_standardization(normal)
-  normed_albedo = tf.image.per_image_standardization(albedo)
-  normed_depth = tf.image.per_image_standardization(depth)
+  # normed_color = tf.image.per_image_standardization(color)
+  # normed_specular = tf.image.per_image_standardization(specular)
+  # normed_diffuse = tf.image.per_image_standardization(diffuse)
+  # normed_normal = tf.image.per_image_standardization(normal)
+  # normed_albedo = tf.image.per_image_standardization(albedo)
+  # normed_depth = tf.image.per_image_standardization(depth)
 
-  data = tf.concat((color, color_v, normed_color,
-                    specular, specular_v, normed_specular,
-                    diffuse, diffuse_v, normed_diffuse,
-                    normal, normal_v, normed_normal,
-                    albedo, albedo_v, normed_albedo,
-                    depth, depth_v, normed_depth), axis=-1)
-  # normalize
-  noisy_img = data
-  # 그다음 specualr
+  # data = tf.concat((color, color_v, normed_color,
+  #                   specular, specular_v, normed_specular,
+  #                   diffuse, diffuse_v, normed_diffuse,
+  #                   normal, normal_v, normed_normal,
+  #                   albedo, albedo_v, normed_albedo,
+  #                   depth, depth_v, normed_depth), axis=-1)
+  # # normalize
+  # noisy_img = data
+  # # 그다음 specualr
 
-  # noisy_img = tf.concat((color, color_v,
-  #                        specular, specular_v,
-  #                        diffuse, diffuse_v,
-  #                        normal, normal_v,
-  #                        albedo, albedo_v,
-  #                        depth, depth_v
-  #                        ), axis=-1)
+  # # noisy_img = tf.concat((color, color_v,
+  # #                        specular, specular_v,
+  # #                        diffuse, diffuse_v,
+  # #                        normal, normal_v,
+  # #                        albedo, albedo_v,
+  # #                        depth, depth_v
+  # #                        ), axis=-1)
 
-  return noisy_img, reference
+  # return noisy_img, reference
