@@ -72,11 +72,11 @@ class DenoisingNet(BaseModel):
     layer8 = self.deconv2d_module(layer7, 64, 4, 2, tf.nn.leaky_relu) + layer2
     layer9 = self.deconv2d_module(layer8, 64, 4, 2, tf.nn.leaky_relu) + layer1
 
-    layer10 = self.conv2d_module(layer9, 64, 3, 1, tf.nn.relu)
-    layer11 = self.conv2d_module(layer10, 64, 3, 1, tf.nn.relu)
-    layer12 = self.conv2d_module(layer11, 64, 3, 1, tf.nn.relu)
-    layer13 = self.conv2d_module(layer12, 64, 3, 1, tf.nn.relu)
-    layer14 = self.conv2d_module(layer13, 64, 3, 1, tf.nn.relu)
+    layer10 = self.conv2d_module(layer9, 64, 3, 1, tf.nn.leaky_relu)
+    layer11 = self.conv2d_module(layer10, 64, 3, 1, tf.nn.leaky_relu)
+    layer12 = self.conv2d_module(layer11, 64, 3, 1, tf.nn.leaky_relu)
+    layer13 = self.conv2d_module(layer12, 64, 3, 1, tf.nn.leaky_relu)
+    layer14 = self.conv2d_module(layer13, 64, 3, 1, tf.nn.leaky_relu)
     
     layer = conv2d(layer14 + layer9, 3, 3, 1, activation=None)
 
