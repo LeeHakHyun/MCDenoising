@@ -90,12 +90,12 @@ def preprocess(noisy_img, reference):
   # clipped_depth = tf.clip_by_value(depth, 0, max_depth)
   # clipped_depth /= max_depth
 
-  color_v        = color_v / (tf.square(tf.reduce_mean(color, axis=-1, keepdims=True)) + 0.001)
-  specular_v     = specular_v / (tf.square(tf.reduce_mean(specular, axis=-1, keepdims=True)) + 0.001)
-  diffuse_v      = diffuse_v / (tf.square(tf.reduce_mean(diffuse, axis=-1, keepdims=True)) + 0.001)
-  normal_v       = normal_v / (tf.square(tf.reduce_mean(normal, axis=-1, keepdims=True)) + 0.001)
-  albedo_v       = albedo_v / (tf.square(tf.reduce_mean(albedo, axis=-1, keepdims=True)) + 0.001)
-  depth_v        = depth_v / (tf.square(depth) + 0.001)
+  # color_v        = color_v / (tf.square(tf.reduce_mean(color, axis=-1, keepdims=True)) + 0.001)
+  # specular_v     = specular_v / (tf.square(tf.reduce_mean(specular, axis=-1, keepdims=True)) + 0.001)
+  # diffuse_v      = diffuse_v / (tf.square(tf.reduce_mean(diffuse, axis=-1, keepdims=True)) + 0.001)
+  # normal_v       = normal_v / (tf.square(tf.reduce_mean(normal, axis=-1, keepdims=True)) + 0.001)
+  # albedo_v       = albedo_v / (tf.square(tf.reduce_mean(albedo, axis=-1, keepdims=True)) + 0.001)
+  # depth_v        = depth_v / (tf.square(depth) + 0.001)
 
   color_grad = calc_grad(color)
   specular_grad = calc_grad(specular)
@@ -120,12 +120,12 @@ def preprocess(noisy_img, reference):
   # diffuse = diffuse / (albedo + 0.00316)
 
   noisy_img = tf.concat(med +
-                        [color, color_v, color_grad, 
-                         specular, specular_v, specular_grad, 
-                         diffuse, diffuse_v, diffuse_grad, 
-                         normal, normal_v, normal_grad,
-                         albedo, albedo_v, albedo_grad,
-                         depth, depth_v, depth_grad], axis=-1)
+                        [color, color_grad, 
+                         specular, specular_grad, 
+                         diffuse, diffuse_grad, 
+                         normal, normal_grad,
+                         albedo, albedo_grad,
+                         depth, depth_grad], axis=-1)
 
   return noisy_img, reference[:, :, :3]
 
