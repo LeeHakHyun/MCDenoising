@@ -3,6 +3,7 @@ import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 
 class BaseModel(metaclass=ABCMeta):
+  @abstractmethod
   def build_model(self):
     pass
 
@@ -36,21 +37,14 @@ class BaseModel(metaclass=ABCMeta):
       loss = tf.reduce_mean(diff)
 
     elif loss_func == 'SSIM':
-      loss = SSIM(outputs, refers)    
-
-    elif loss_func == 'L1_SSIM_RELMSE':
-      ssim = SSIM(outputs, refers)   
-      diff = tf.abs(tf.subtract(outputs, refers))
-      l1 = tf.reduce_mean(diff) 
-
-      loss = l1 * 0.3 + ssim * 0.7
+      loss = SSIM(outputs, refers)
 
     return loss
 
 
   def build_train_op(self, lr, loss):
-    #optim = tf.train.AdamOptimizer(lr)
-    optim = tf.train.RMSPropOptimizer(lr)
+    optim = tf.train.AdamOptimizer(lr)
+    # optim = tf.train.RMSPropOptimizer(lr)
     grads = optim.compute_gradients(loss)
 
     # Clip gradients to avoid exploding weights
@@ -59,19 +53,18 @@ class BaseModel(metaclass=ABCMeta):
     # Apply gradients
     apply_gradient_op = optim.apply_gradients(grads,
                                               global_step=tf.train.get_or_create_global_step())
-
     with tf.control_dependencies([apply_gradient_op]):
       train_op = tf.no_op(name='Train')
 
     return train_op
 
 def SSIM(a, b):
-  a = tf.convert_to_tensor(a)
-  b = tf.convert_to_tensor(b)
-
+  a = tf.convert_to_tensor(a);
+  b = tf.convert_to_tensor(b);
   # Generate filter kernel
   _, _, _, d = a.get_shape().as_list()
   window = generate_weight(5, 1.5)
+
   window = window / np.sum(window)
   window = window.astype(np.float32)
   window = window[:,:,np.newaxis,np.newaxis]
@@ -83,8 +76,8 @@ def SSIM(a, b):
   mB = tf.nn.depthwise_conv2d(b, window, strides=[1, 1, 1, 1], padding='VALID')
 
   # Find standard deviations
-  sA  = tf.nn.depthwise_conv2d(a*a, window, strides=[1, 1, 1, 1], padding='VALID') - mA**2
-  sB  = tf.nn.depthwise_conv2d(b*b, window, strides=[1, 1, 1, 1], padding='VALID') - mB**2
+  sA = tf.nn.depthwise_conv2d(a*a, window, strides=[1, 1, 1, 1], padding='VALID') - mA**2
+  sB = tf.nn.depthwise_conv2d(b*b, window, strides=[1, 1, 1, 1], padding='VALID') - mB**2
   sAB = tf.nn.depthwise_conv2d(a*b, window, strides=[1, 1, 1, 1], padding='VALID') - mA*mB
 
   # Calc SSIM constants
@@ -103,14 +96,11 @@ def SSIM(a, b):
   return 1-tf.reduce_mean(p1*p2)
 
 def generate_weight(radius, sigma):
-
   weight = np.zeros([2*radius + 1, 2*radius + 1])
   expFactor = -1.0 / (2 * sigma * sigma)
   for i in range(-radius, radius + 1):
     for j in range(-radius, radius + 1):
       weight[i+radius,j+radius] = np.exp(expFactor * (i * i + j * j))
   weightSum = np.sum(weight)
-
   assert(weightSum > 0)
   return weight / weightSum
-

@@ -1,8 +1,16 @@
 debug/
 data/
+exrfile/
+.vscode/
+.main.py.swp/
 *.vsdx
 *.~vsdx
 __pycache__/
 *.pyc
 playground/
 src/__pycache__/*
+demo_refer.py
+EXP.py
+*.jpg
+LBF.py
+*.swp

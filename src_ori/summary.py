@@ -23,12 +23,12 @@ class Summary:
 
     summary_dict: dict
       summarys에 기록할 딕셔너리 {summary keys : value}
-
+    
     '''
     try:
       if self._is_first_time:
         self._is_first_time = False
-
+        
         with tf.variable_scope(scope_name):
           for name, value in summary_dict.items():
             dtype = eval('tf.' + str(np.array(value).dtype))
@@ -36,9 +36,9 @@ class Summary:
             tf.summary.scalar(name, self._summary[name])
 
       self._merged_summary = tf.summary.merge_all()
-
+      
       feed_dict = {self._summary[name] : value for name, value in summary_dict.items()}
-
+      
       summarys = sess.run(self._merged_summary, feed_dict=feed_dict)
 
       self._writer.add_summary(summarys, global_step=step)

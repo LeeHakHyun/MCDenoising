@@ -3,7 +3,7 @@ import tensorflow as tf
 def batch_norm(inputs, name=None):
   return tf.layers.batch_normalization(inputs, name=name)
 
-def conv2d(inputs, filters, kernel_size=3, strides=1,
+def conv2d(inputs, filters, kernel_size=3, strides=1, 
            activation=None, padding='same', name=None):
   return tf.layers.conv2d(
     inputs             = inputs,
@@ -16,7 +16,7 @@ def conv2d(inputs, filters, kernel_size=3, strides=1,
     name               = name
   )
 
-def deconv2d(inputs, filters, kernel_size=3, strides=1,
+def deconv2d(inputs, filters, kernel_size=3, strides=1, 
            activation=None, padding='same', name=None):
   return tf.layers.conv2d_transpose(
     inputs             = inputs,
@@ -28,11 +28,3 @@ def deconv2d(inputs, filters, kernel_size=3, strides=1,
     kernel_initializer = tf.contrib.layers.variance_scaling_initializer(),
     name               = name
   )
-
-def max_pool(inputs, pool_size, strides=1, padding='same'):
-    return tf.layers.max_pooling2d(
-      inputs      = inputs,
-      pool_size   = pool_size,
-      strides     = strides,
-      padding     = padding 
-    )

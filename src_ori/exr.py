@@ -1,4 +1,4 @@
-import os
+import os 
 import cv2
 import Imath
 import OpenEXR
@@ -8,12 +8,12 @@ from glob import glob
 
 import tensorflow as tf
 
-channel_list = [
-               'B',          'G',          'R',    'colorVariance.Z',
+channel_list = [  
+               'B',          'G',          'R',    'colorVariance.Z', 
       'specular.B', 'specular.G', 'specular.R', 'specularVariance.Z',
-       'diffuse.B',  'diffuse.G',  'diffuse.R',  'diffuseVariance.Z',
-        'normal.B',   'normal.G',   'normal.R',   'normalVariance.Z',
-        'albedo.B',   'albedo.G',   'albedo.R',   'albedoVariance.Z',
+       'diffuse.B',  'diffuse.G',  'diffuse.R',  'diffuseVariance.Z', 
+        'normal.B',   'normal.G',   'normal.R',   'normalVariance.Z', 
+        'albedo.B',   'albedo.G',   'albedo.R',   'albedoVariance.Z', 
          'depth.Z',                                'depthVariance.Z',
   ]
 
@@ -47,13 +47,13 @@ def read_exr(file_name):
 
   # 값을 저장할 곳
   exr_data  = np.zeros((height, width, len(channel_list)))
-
+  
 
   # 각 채널의 string을 처리
   for index, string in enumerate(strings):
     # 읽은 string 값을 각 채널의 data type으로 변환(FLOAT, HALF)
     data = np.fromstring(
-      string,
+      string, 
       dtype = np.float32 if str(channels[channel_list[index]].type) == 'FLOAT'
          else np.float16
       )
@@ -71,14 +71,13 @@ def read_exr(file_name):
 
 
 def write_exr(data, path):
-  ''' 
-  data를 exr파일로 저장
+  ''' data를 exr파일로 저장
   Args:
     path: 경로 + 파일 이름.exr
     data: 3차원 이미지 데이터
   '''
 
-  #assert data.ndim == 3, "exr 파일 write하려는데 차원 수가 다름" + str(data.shape)
+  assert data.ndim == 3, "exr 파일 write하려는데 차원 수가 다름" + str(data.shape)
 
   if not os.path.isdir(os.path.dirname(path)):
     os.makedirs(os.path.dirname(path))
@@ -90,12 +89,12 @@ def write_exr(data, path):
   else:
     channel_list = ['B']
 
-
+  
   header = OpenEXR.Header(w, h)
-
+  
   header['compression'] = Imath.Compression(Imath.Compression.PIZ_COMPRESSION)
 
-  # header['channels'] = {c: pixel_type#Imath.Channel(Imath.PixelType.FLOAT)
+  # header['channels'] = {c: pixel_type#Imath.Channel(Imath.PixelType.FLOAT) 
   #                       for c in channel_list}
 
   out = OpenEXR.OutputFile(path, header)
@@ -107,23 +106,23 @@ def write_exr(data, path):
 
 def to_jpg(exrfile, jpgfile):
   ''' exrfile을 jpgfile로 변환합니다. '''
-
+  
   color_ch = ['R', 'G', 'B']
-
+  
   File    = OpenEXR.InputFile(exrfile)
   PixType = Imath.PixelType(Imath.PixelType.FLOAT)
   DW      = File.header()['dataWindow']
   Size    = (DW.max.x - DW.min.x + 1, DW.max.y - DW.min.y + 1)
   rgb     = [np.fromstring(File.channel(c, PixType), dtype=np.float32) \
                            for c in color_ch]
-
+  
   for i in range(len(color_ch)):
       rgb[i] = np.where(rgb[i]<=0.0031308,
               (rgb[i]*12.92)*255.0,
               (1.055*(rgb[i]**(1.0/2.4))-0.055) * 255.0)
-
+  
   rgb8 = [Image.frombytes("F", Size, c.tostring()).convert("L") for c in rgb]
-  Image.merge("RGB", rgb8).save(jpgfile, "JPEG", quality=100)
+  Image.merge("RGB", rgb8).save(jpgfile, "JPEG", quality=95)
 
 def read_exr_pair(exr_dir):
   noisy_img_files = sorted(glob(os.path.join(exr_dir, "noisy_img", "*.exr")))
@@ -133,13 +132,13 @@ def read_exr_pair(exr_dir):
 
     noisy_exr_name = os.path.basename(noisy_exr).split('-')[0]
     reference_name = os.path.basename(reference_exr).split('-')[0]
-
+    
     assert noisy_exr_name == reference_name
 
     print("Reading..." + noisy_exr_name)
 
     noisy_img = read_exr(noisy_exr)
-    reference = read_exr(reference_exr)
+    reference = read_exr(reference_exr)    
 
     # reference는 color와 specular, diffuse만
     color = reference[:, :, :3]
@@ -173,7 +172,7 @@ def generate_patched_data(exr_dir, tfrecord_path, patch_size, n_patch):
 def generate_data(exr_dir, tfrecord_path):
   with tf.python_io.TFRecordWriter(tfrecord_path) as writer:
     for noisy_img, reference in read_exr_pair(exr_dir):
-      write_tfrecord(writer, noisy_img, reference)
+      write_tfrecord(writer, noisy_img, reference) 
 
 def generate_jpg_data(dir):
   img_files = sorted(glob(os.path.join(dir, "*.exr")))
@@ -192,13 +191,59 @@ def generate_jpg_datas(exr_dir):
 
     noisy_exr_name = os.path.basename(noisy_exr).split('-')[0]
     reference_name = os.path.basename(reference_exr).split('-')[0]
-
+    
     to_jpg(noisy_exr, os.path.join(os.path.dirname(noisy_exr), noisy_exr_name + ".jpg"))
     to_jpg(reference_exr, os.path.join(os.path.dirname(reference_exr), reference_name + ".jpg"))
 
 if __name__ == '__main__':
   #generate_patched_data('./data/train', './data/train.tfrecord', 64, 500)
   #generate_data('./data/valid', './data/valid.tfrecord')
-
+  
   generate_data('./data/valid/', './data/demo_valid.tfrecord')
   #generate_jpg_data('./data/demo/noisy_img')
+  
+def read_exr_RGB(filename):
+    exrfile = OpenEXR.InputFile(filename)
+    dw = exrfile.header()['dataWindow']
+    width      = dw.max.x - dw.min.x + 1
+    height     = dw.max.y - dw.min.y + 1
+    isize = (height, width)
+    channels = ['R', 'G', 'B']
+    channelData = dict()
+    
+    for c in channels:
+        C = exrfile.channel(c, Imath.PixelType(Imath.PixelType.FLOAT))
+        C = np.fromstring(C, dtype=np.float32)
+        C = np.reshape(C, isize)
+        
+        channelData[c] = C
+    
+    
+    # create RGB image
+    img = np.concatenate([channelData[c][...,np.newaxis] for c in ['R', 'G', 'B']], axis=2)
+    
+    
+    return img
+
+def read_exr_BGR(filename):
+    exrfile = OpenEXR.InputFile(filename)
+    dw = exrfile.header()['dataWindow']
+    width      = dw.max.x - dw.min.x + 1
+    height     = dw.max.y - dw.min.y + 1
+    isize = (height, width)
+    channels = ['B', 'G', 'R']
+    channelData = dict()
+    
+    for c in channels:
+        C = exrfile.channel(c, Imath.PixelType(Imath.PixelType.FLOAT))
+        C = np.fromstring(C, dtype=np.float32)
+        C = np.reshape(C, isize)
+        
+        channelData[c] = C
+    
+    
+    # create RGB image
+    img = np.concatenate([channelData[c][...,np.newaxis] for c in ['B', 'G', 'R']], axis=2)
+    
+    
+    return img
